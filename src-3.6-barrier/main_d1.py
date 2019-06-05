@@ -32,13 +32,26 @@ barrieris locked (zero or negative) until all threads arrive; then it shouldbe u
 
 import random
 
-def count(mutex,barrier):
+def critical(i):
+    print("Critical! A-Z5 button! [%s]" %i)
+
+def count(i, mutex, barrier, n):
     global x
+    logging.info(" begin count... [%s]" %i)
     mutex.acquire()
     temp = x
     time.sleep(random.random() / 100)
-    x=temp+1
+    x = temp+1
     mutex.release()
+
+    if x ==n:
+        barrier.release()
+
+    barrier.acquire()
+
+    critical(i)
+
+    logging.info(" end count... [%s]" % i)
 
 x = 0
 
@@ -47,23 +60,20 @@ if __name__ == "__main__":
 
     logging.info("Main start")
 
-    n = 10
+    n = 5
+    barrier = threading.Semaphore(0)
     mutex = threading.Semaphore(1)
-    barrier =  threading.Semaphore(0)
-
-    print(x)
-
     threads = []
-    for t in range(100):
-        t = threading.Thread(target=count, args=(mutex,barrier)) 
+    for i in range(10):
+        t = threading.Thread(target=count, args=(i, mutex, barrier, n))
+        print('x:', x)
         t.start()
-        print(x)
         threads.append(t)
 
     for thread in threads:
         thread.join()
 
-    print(x)
+    print('x:',x)
 
     logging.info("Main end")
 
